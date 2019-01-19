@@ -117,6 +117,7 @@ class MainWindow(QMainWindow):
         password = self.ui.passwordEdit.text()
         plugin = self.ui.pluginBox.currentText()
         plugin_opt = self.ui.plugin_optEdit.text()
+        via = self.ui.viaEdit.text()
 
         if not port.isdigit():
             return
@@ -156,6 +157,10 @@ class MainWindow(QMainWindow):
             query_string = '&'.join(['%s=%s' % (k, v) for k, v in qs.items()])
             url += '?' + query_string
 
+        if via:
+            url += '|'
+            url += via
+
         url += ' %s' % priority
         data = json.dumps((name, url)).encode()
         try:
@@ -171,6 +176,7 @@ class MainWindow(QMainWindow):
             self.ui.passwordEdit.clear()
             self.ui.plugin_optEdit.clear()
             self.ui.priorityEdit.clear()
+            self.ui.viaEdit.clear()
 
     def protocolChanged(self):
         ps = self.ui.protocolBox.currentText()
@@ -212,6 +218,13 @@ class MainWindow(QMainWindow):
             proxy = urlopen('http://127.0.0.1:%d/api/proxy/%s' % (self.port, name), timeout=1).read().decode()
         except Exception:
             return
+        if '|' in proxy:
+            proxy_list = proxy.split('|')
+            proxy = proxy_list[0]
+            via = '|'.join(proxy_list[1:])
+        else:
+            via = ''
+
         parse = urllib.parse.urlparse(proxy)
         query = urllib.parse.parse_qs(parse.query)
 
@@ -249,6 +262,7 @@ class MainWindow(QMainWindow):
         self.ui.hostnameEdit.setText(parse.hostname)
         self.ui.portEdit.setText(str(parse.port))
         self.ui.priorityEdit.setText(str(piority))
+        self.ui.viaEdit.setText(via)
 
         # plugin
         plugin = query.get('plugin', [None, ])[0]

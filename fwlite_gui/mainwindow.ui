@@ -64,8 +64,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>80</width>
+             <height>20</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -168,8 +168,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>80</width>
+             <height>20</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -413,13 +413,6 @@
                <item row="0" column="1">
                 <widget class="QComboBox" name="protocolBox"/>
                </item>
-               <item row="4" column="0">
-                <widget class="QLabel" name="label_7">
-                 <property name="text">
-                  <string>Username</string>
-                 </property>
-                </widget>
-               </item>
                <item row="5" column="0">
                 <widget class="QLabel" name="label_8">
                  <property name="text">
@@ -456,6 +449,23 @@
                </item>
                <item row="9" column="1">
                 <widget class="QLineEdit" name="plugin_optEdit"/>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="label_7">
+                 <property name="text">
+                  <string>Username</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="11" column="0">
+                <widget class="QLabel" name="label_17">
+                 <property name="text">
+                  <string>Via</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="11" column="1">
+                <widget class="QLineEdit" name="viaEdit"/>
                </item>
               </layout>
              </item>
