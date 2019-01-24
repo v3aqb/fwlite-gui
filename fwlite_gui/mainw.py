@@ -295,13 +295,14 @@ class MainWindow(QMainWindow):
             data = json.loads(urlopen('http://127.0.0.1:%d/api/redirector' % self.port, timeout=1).read().decode())
             lst = []
             self.ui.RedirectorRulesLayout.removeItem(self.spacer_RR)
-            for rid, rule, dest in data:
+            for redir_rule in data:
+                rule, _, dest = redir_rule.partition(' ')
                 if self.redir_rule_list:
                     w = self.redir_rule_list.pop(0)
-                    w.updaterule(rid, rule, dest)
+                    w.updaterule(rule, dest)
                     w.setVisible(True)
                 else:
-                    w = RedirRule(rid, rule, dest, self)
+                    w = RedirRule(rule, dest, self)
                     self.ui.RedirectorRulesLayout.addWidget(w)
                 lst.append(w)
             for w in self.redir_rule_list:
@@ -316,7 +317,6 @@ class MainWindow(QMainWindow):
         dest = self.ui.DestEdit.text()
         data = json.dumps((rule, dest)).encode()
         try:
-            print('line 229 port %d' % self.port)
             urlopen('http://127.0.0.1:%d/api/redirector' % self.port, data, timeout=1)
         except Exception:
             self.tray.showMessage_('add redirrule %s %s failed!' % (rule, dest))
@@ -542,7 +542,7 @@ class LocalRule(QWidget):
 
 
 class RedirRule(QWidget):
-    def __init__(self, rid, rule, dest, window, parent=None):
+    def __init__(self, rule, dest, window, parent=None):
         super(RedirRule, self).__init__(parent)
         self.resize(232, 23)
         self.horizontalLayout = QtWidgets.QHBoxLayout(self)
@@ -561,20 +561,18 @@ class RedirRule(QWidget):
         self.delButton.clicked.connect(self.delrule)
 
         self.window = window
-        self.rule = rule
-        self.updaterule(rid, rule, dest)
+        self.rule = '%s %s' % (rule, dest)
+        self.updaterule(rule, dest)
 
     def delrule(self):
         from http.client import HTTPConnection
         conn = HTTPConnection('127.0.0.1', self.window.port, timeout=1)
-        conn.request('DELETE', '/api/redirector/%d?rule=%s' % (self.rid, base64.urlsafe_b64encode(self.rule.encode()).decode()))
+        conn.request('DELETE', '/api/redirector/?rule=%s' % (base64.urlsafe_b64encode(self.rule.encode()).decode()))
         conn.getresponse().read()
 
-    def updaterule(self, rid, rule, dest):
-        self.rid = rid
-        self.rule = rule
-        text = '%s %s' % (rule, dest)
-        self.lineEdit.setText(text)
+    def updaterule(self, rule, dest):
+        self.rule = '%s %s' % (rule, dest)
+        self.lineEdit.setText(self.rule)
 
 
 if __name__ == '__main__':
