@@ -68,22 +68,21 @@ class MainWindow(QMainWindow):
         self.ui.RedirectorRulesLayout.addItem(self.spacer_RR)
         self.redir_rule_list = []
 
-        # settings
-        self.ui.parentAddButton.clicked.connect(self.addParent)
-        self.ui.parentRemoveButton.clicked.connect(self.delParent)
-        self.ui.editConfButton.clicked.connect(self.openconf)
-        self.ui.editLocalButton.clicked.connect(self.openlocal)
-        self.ui.gfwlistToggle.stateChanged.connect(self.gfwlistToggle)
+        # proxyList
+        self.ui.proxyAddButton.clicked.connect(self.addProxy)
+        self.ui.proxyRemoveButton.clicked.connect(self.delProxy)
         self.ui.protocolBox.currentIndexChanged.connect(self.protocolChanged)
-
+        self.ui.proxyDisableButton.clicked.connect(self.disableProxy)
+        self.ui.proxyActivateButton.clicked.connect(self.activateProxy)
+        self.ui.exclusiveProxyAddButton.clicked.connect(self.exclusiveProxyAdd)
         header = [_tr("MainWindow", "name"),
                   _tr("MainWindow", "address"),
                   _tr("MainWindow", "priority")]
         data = []
-        self.table_model = MyTableModel(self, data, header)
-        self.ui.tableView.setModel(self.table_model)
-        self.ui.tableView.clicked.connect(self.on_proxy_select)
+        self.PL_table_model = MyTableModel(self, data, header)
 
+        self.ui.proxyListView.setModel(self.PL_table_model)
+        self.ui.proxyListView.clicked.connect(self.on_proxy_select)
         import hxcrypto
         method_list = ['']
         method_list.extend(sorted(hxcrypto.method_supported.keys()))
@@ -92,20 +91,47 @@ class MainWindow(QMainWindow):
         self.ui.pluginBox.addItems(SUPPORTED_PLUGIN)
         self.ui.protocolBox.addItems(SUPPORTED_PROTOCOL)
 
+        # port forward
+
+        # settings
+        self.ui.gfwlistToggle.stateChanged.connect(self.gfwlistToggle)
+        self.ui.adblockToggle.stateChanged.connect(self.adblockToggle)
+        self.ui.editConfButton.clicked.connect(self.openconf)
+        self.ui.editLocalButton.clicked.connect(self.openlocal)
+
         self.createProcess()
 
-    def refresh_Settings(self):
+    def refresh_proxyList(self):
         try:
             data = json.loads(urlopen('http://127.0.0.1:%d/api/proxy' % self.port, timeout=1).read().decode())
-            self.table_model.update(data)
-            self.ui.tableView.resizeRowsToContents()
-            self.ui.tableView.resizeColumnsToContents()
-            self.ui.gfwlistToggle.setCheckState(QtCore.Qt.Checked if json.loads(urlopen('http://127.0.0.1:%d/api/gfwlist' % self.port, timeout=1).read().decode()) else QtCore.Qt.Unchecked)
+            self.PL_table_model.update(data)
+            self.ui.proxyListView.resizeRowsToContents()
+            self.ui.proxyListView.resizeColumnsToContents()
         except Exception as e:
             print(repr(e))
             print(traceback.format_exc())
 
-    def addParent(self):
+    def refresh_Settings(self):
+        try:
+            self.ui.gfwlistToggle.setCheckState(QtCore.Qt.Checked if json.loads(urlopen('http://127.0.0.1:%d/api/gfwlist' % self.port, timeout=1).read().decode()) else QtCore.Qt.Unchecked)
+            self.ui.adblockToggle.setCheckState(QtCore.Qt.Checked if json.loads(urlopen('http://127.0.0.1:%d/api/adblock' % self.port, timeout=1).read().decode()) else QtCore.Qt.Unchecked)
+        except Exception as e:
+            print(repr(e))
+            print(traceback.format_exc())
+
+    def exclusiveProxyAdd(self):
+        name = self.ui.nameEdit.text()
+        self.addProxy()
+        # disable all other proxy
+        name_list = [item[0] for item in self.PL_table_model.mylist]
+        for _name in name_list:
+            if _name == name:
+                continue
+            self.load_proxy_by_name(_name)
+            self.ui.priorityEdit.setText(str(-1))
+            self.addProxy()
+
+    def addProxy(self):
         protocol = self.ui.protocolBox.currentText()
         name = self.ui.nameEdit.text()
         hostname = self.ui.hostnameEdit.text()
@@ -166,7 +192,7 @@ class MainWindow(QMainWindow):
         try:
             urlopen('http://127.0.0.1:%d/api/proxy' % self.port, data, timeout=1).read()
         except Exception:
-            self.tray.showMessage_('add parent %s failed!' % name)
+            self.tray.showMessage_('add proxy %s failed!' % name)
         else:
             self.ui.nameEdit.clear()
             self.ui.hostnameEdit.clear()
@@ -185,37 +211,43 @@ class MainWindow(QMainWindow):
         self.ui.encryptionBox.setEnabled(ps in ('shadowsocks', 'hxsocks2'))
         self.ui.pskEdit.setEnabled(ps in ('shadowsocks', 'hxsocks2'))
 
-    def gfwlistToggle(self):
-        try:
-            urlopen('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.gfwlistToggle.isChecked()).encode(), timeout=1).read()
-        except Exception as e:
-            print(repr(e))
+    def activateProxy(self):
+        index = self.ui.proxyListView.currentIndex().row()
+        _, _, piority = self.PL_table_model.mylist[index]
+        if 0 <= piority <= 100:
+            return
+        self.on_proxy_select()
+        self.ui.priorityEdit.setText(str(99))
+        self.addProxy()
 
-    def autoUpdateToggle(self):
-        try:
-            urlopen('http://127.0.0.1:%d/api/autoupdate' % self.port, json.dumps(self.ui.updateToggle.isChecked()).encode(), timeout=1).read()
-        except Exception as e:
-            print(repr(e))
+    def disableProxy(self):
+        self.on_proxy_select()
+        self.ui.priorityEdit.setText(str(-1))
+        self.addProxy()
 
-    def delParent(self):
-        index = self.ui.tableView.currentIndex().row()
+    def delProxy(self):
+        index = self.ui.proxyListView.currentIndex().row()
         from http.client import HTTPConnection
-        print(repr(self.table_model.mylist[index][0]))
         try:
+            name = self.PL_table_model.mylist[index][0]
+            name = base64.urlsafe_b64encode(name.encode()).decode()
             conn = HTTPConnection('127.0.0.1', self.port, timeout=1)
-            conn.request('DELETE', '/api/proxy/%s' % (self.table_model.mylist[index][0]))
+            conn.request('DELETE', '/api/proxy/%s' % name)
             resp = conn.getresponse()
-            content = resp.read()
-            print(content)
+            resp.read()
         except Exception as e:
             print(repr(e))
 
     def on_proxy_select(self):
-        index = self.ui.tableView.currentIndex().row()
-        name, _, piority = self.table_model.mylist[index]
+        index = self.ui.proxyListView.currentIndex().row()
+        name, _, piority = self.PL_table_model.mylist[index]
+        self.load_proxy_by_name(name)
+        self.ui.priorityEdit.setText(str(piority))
 
+    def load_proxy_by_name(self, name):
+        _name = base64.urlsafe_b64encode(name.encode()).decode()
         try:
-            proxy = urlopen('http://127.0.0.1:%d/api/proxy/%s' % (self.port, name), timeout=1).read().decode()
+            proxy = urlopen('http://127.0.0.1:%d/api/proxy/%s' % (self.port, _name), timeout=1).read().decode()
         except Exception:
             return
         if '|' in proxy:
@@ -261,7 +293,6 @@ class MainWindow(QMainWindow):
         self.ui.nameEdit.setText(name)
         self.ui.hostnameEdit.setText(parse.hostname)
         self.ui.portEdit.setText(str(parse.port))
-        self.ui.priorityEdit.setText(str(piority))
         self.ui.viaEdit.setText(via)
 
         # plugin
@@ -271,6 +302,18 @@ class MainWindow(QMainWindow):
         self.ui.pluginBox.setCurrentIndex(SUPPORTED_PLUGIN.index(plugin) if plugin else 0)
         if plugin_info:
             self.ui.plugin_optEdit.setText(';'.join(plugin_info[1:]))
+
+    def gfwlistToggle(self):
+        try:
+            urlopen('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.gfwlistToggle.isChecked()).encode(), timeout=1).read()
+        except Exception as e:
+            print(repr(e))
+
+    def adblockToggle(self):
+        try:
+            urlopen('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.adblockToggle.isChecked()).encode(), timeout=1).read()
+        except Exception as e:
+            print(repr(e))
 
     def openlocal(self):
         self.openfile(self.path_to_local)
@@ -425,6 +468,7 @@ class MainWindow(QMainWindow):
         print('newStdoutInfo, port %d' % self.port)
         self.refresh_LR()
         self.refresh_RR()
+        self.refresh_proxyList()
         self.refresh_Settings()
 
     def showToggle(self):
@@ -438,7 +482,7 @@ class MainWindow(QMainWindow):
             self.activateWindow()
 
     def openSetting(self):
-        self.ui.tabWidget.setCurrentIndex(3)
+        self.ui.tabWidget.setCurrentIndex(5)
         self.show()
         if self.isMinimized():
             self.showNormal()

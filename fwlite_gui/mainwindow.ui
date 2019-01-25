@@ -17,18 +17,18 @@
    <locale language="English" country="UnitedStates"/>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_3">
+   <layout class="QHBoxLayout" name="horizontalLayout_13">
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="locale">
        <locale language="English" country="UnitedStates"/>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
-        <string>Console</string>
+        <string>Log</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -249,18 +249,32 @@
       </widget>
       <widget class="QWidget" name="tab_4">
        <attribute name="title">
-        <string>Settings</string>
+        <string>ProxyList</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="4,3">
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_8">
           <item>
-           <widget class="QTableView" name="tableView"/>
+           <widget class="QTableView" name="proxyListView"/>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_4">
             <item>
-             <widget class="QPushButton" name="parentRemoveButton">
+             <widget class="QPushButton" name="proxyActivateButton">
+              <property name="text">
+               <string>Activate</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="proxyDisableButton">
+              <property name="text">
+               <string>Disable</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="proxyRemoveButton">
               <property name="locale">
                <locale language="English" country="UnitedStates"/>
               </property>
@@ -274,33 +288,19 @@
          </layout>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_9">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_6">
-            <property name="leftMargin">
-             <number>12</number>
-            </property>
-            <item>
-             <widget class="QCheckBox" name="gfwlistToggle">
-              <property name="locale">
-               <locale language="English" country="UnitedStates"/>
-              </property>
-              <property name="text">
-               <string>gfwlist</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
+         <layout class="QVBoxLayout" name="verticalLayout_9" stretch="1,0">
           <item>
            <widget class="QGroupBox" name="groupBox_2">
             <property name="locale">
              <locale language="English" country="UnitedStates"/>
             </property>
             <property name="title">
-             <string>Add Parent</string>
+             <string>Add Proxy</string>
             </property>
-            <layout class="QVBoxLayout" name="verticalLayout_10">
+            <layout class="QVBoxLayout" name="verticalLayout_10" stretch="1">
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
              <item>
               <layout class="QFormLayout" name="formLayout_4">
                <property name="fieldGrowthPolicy">
@@ -469,14 +469,123 @@
                </item>
               </layout>
              </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_16">
+            <item>
+             <widget class="QPushButton" name="proxyAddButton">
+              <property name="text">
+               <string>Add</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="exclusiveProxyAddButton">
+              <property name="text">
+               <string>Add and disable other Proxies</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_5">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <attribute name="title">
+        <string>Port Forward</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="4,3">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_13">
+          <item>
+           <widget class="QLabel" name="label_21">
+            <property name="text">
+             <string>Port Forward</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="PFView"/>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <item>
+             <widget class="QPushButton" name="PFRemoveButton">
+              <property name="locale">
+               <locale language="English" country="UnitedStates"/>
+              </property>
+              <property name="text">
+               <string>Remove</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="PFStopButton">
+              <property name="text">
+               <string>Stop</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_14" stretch="1,0">
+          <item>
+           <widget class="QGroupBox" name="groupBox_3">
+            <property name="locale">
+             <locale language="English" country="UnitedStates"/>
+            </property>
+            <property name="title">
+             <string>Add Port Forward</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_7">
-               <item>
-                <widget class="QPushButton" name="parentAddButton">
+              <layout class="QFormLayout" name="formLayout">
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_18">
                  <property name="text">
-                  <string>Add</string>
+                  <string>Local</string>
                  </property>
                 </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_19">
+                 <property name="text">
+                  <string>Target</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="label_20">
+                 <property name="text">
+                  <string>Proxy</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QComboBox" name="comboBox">
+                 <property name="editable">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLineEdit" name="lineEdit"/>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLineEdit" name="lineEdit_2"/>
                </item>
               </layout>
              </item>
@@ -484,28 +593,63 @@
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
-            <item>
-             <widget class="QPushButton" name="editConfButton">
-              <property name="locale">
-               <locale language="English" country="UnitedStates"/>
-              </property>
+           <widget class="QPushButton" name="PFAddButton">
+            <property name="text">
+             <string>Add</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_6">
+       <attribute name="title">
+        <string>Settings</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="1">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_15">
+          <item>
+           <layout class="QFormLayout" name="formLayout_2">
+            <item row="0" column="0">
+             <widget class="QCheckBox" name="gfwlistToggle">
               <property name="text">
-               <string>Edit userconf.ini</string>
+               <string>GFWList</string>
               </property>
              </widget>
             </item>
-            <item>
-             <widget class="QPushButton" name="editLocalButton">
+            <item row="1" column="0">
+             <widget class="QCheckBox" name="adblockToggle">
               <property name="locale">
                <locale language="English" country="UnitedStates"/>
               </property>
               <property name="text">
-               <string>Edit local.txt</string>
+               <string>ADBlock</string>
               </property>
              </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="editConfButton">
+            <property name="locale">
+             <locale language="English" country="UnitedStates"/>
+            </property>
+            <property name="text">
+             <string>Edit userconf.ini</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="editLocalButton">
+            <property name="locale">
+             <locale language="English" country="UnitedStates"/>
+            </property>
+            <property name="text">
+             <string>Edit local.txt</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
