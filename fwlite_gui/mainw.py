@@ -77,7 +77,9 @@ class MainWindow(QMainWindow):
         self.ui.exclusiveProxyAddButton.clicked.connect(self.exclusiveProxyAdd)
         header = [_tr("MainWindow", "name"),
                   _tr("MainWindow", "address"),
-                  _tr("MainWindow", "priority")]
+                  _tr("MainWindow", "priority"),
+                  _tr("MainWindow", "resp"),
+                  ]
         data = []
         self.PL_table_model = MyTableModel(self, data, header)
 
@@ -240,7 +242,8 @@ class MainWindow(QMainWindow):
 
     def on_proxy_select(self):
         index = self.ui.proxyListView.currentIndex().row()
-        name, _, piority = self.PL_table_model.mylist[index]
+        name = self.PL_table_model.mylist[index][0]
+        piority = self.PL_table_model.mylist[index][2]
         self.load_proxy_by_name(name)
         self.ui.priorityEdit.setText(str(piority))
 

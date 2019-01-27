@@ -56,6 +56,8 @@ data = {'Local Rules': u"自定义规则",
         'No Proxy': u'无代理',
         'Port Forward': u'端口转发',
         'Add Port Forward': u'添加端口转发',
+        'Start': u'开始',
         'Stop': u'停止',
         'Activate': u'启用',
+        'resp': u'响应',
         }
