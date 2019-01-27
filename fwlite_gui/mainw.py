@@ -465,11 +465,25 @@ class MainWindow(QMainWindow):
             self.reload(clear=False)
 
     def newStdoutInfo(self):
-        print('newStdoutInfo, port %d' % self.port)
-        self.refresh_LR()
-        self.refresh_RR()
-        self.refresh_proxyList()
-        self.refresh_Settings()
+        data = bytes(self.runner.readAllStandardOutput())
+        if not data:
+            return
+        data = data.decode()
+        data_list = data.splitlines(keepends=False)
+        if 'all' in data_list or '' in data_list:
+            self.refresh_LR()
+            self.refresh_RR()
+            self.refresh_proxyList()
+            self.refresh_Settings()
+            return
+        if 'local' in data_list:
+            self.refresh_LR()
+        if 'redir' in data_list:
+            self.refresh_RR()
+        if 'proxy' in data_list:
+            self.refresh_proxyList()
+        if 'settings' in data_list:
+            self.refresh_Settings()
 
     def showToggle(self):
         if self.isVisible():
