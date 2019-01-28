@@ -94,6 +94,15 @@ class MainWindow(QMainWindow):
         self.ui.protocolBox.addItems(SUPPORTED_PROTOCOL)
 
         # port forward
+        self.ui.PFAddButton.clicked.connect(self.addForward)
+        self.ui.PFRemoveButton.clicked.connect(self.delForward)
+        header = [_tr("MainWindow", "target"),
+                  _tr("MainWindow", "proxy"),
+                  _tr("MainWindow", "port"),
+                  ]
+        data = []
+        self.PF_table_model = MyTableModel(self, data, header)
+        self.ui.PFView.setModel(self.PF_table_model)
 
         # settings
         self.ui.gfwlistToggle.stateChanged.connect(self.gfwlistToggle)
@@ -103,12 +112,55 @@ class MainWindow(QMainWindow):
 
         self.createProcess()
 
+    def addForward(self):
+        try:
+            target = self.ui.PFTargetEdit.text()
+            port = self.ui.PFPortEdit.text()
+            if not port.isdigit():
+                port = 0
+            port = int(port)
+            proxy = self.ui.PFProxyBox.currentText()
+            data = json.dumps((target, proxy, port)).encode()
+            urlopen('http://127.0.0.1:%d/api/forward' % self.port, data, timeout=1).read()
+            self.ui.PFTargetEdit.clear()
+            self.ui.PFPortEdit.clear()
+        except Exception as e:
+            print(repr(e))
+            print(traceback.format_exc())
+
+    def delForward(self):
+        index = self.ui.PFView.currentIndex().row()
+        from http.client import HTTPConnection
+        try:
+            port = self.PF_table_model.mylist[index][2]
+            conn = HTTPConnection('127.0.0.1', self.port, timeout=1)
+            conn.request('DELETE', '/api/forward/%s' % port)
+            resp = conn.getresponse()
+            resp.read()
+        except Exception as e:
+            print(repr(e))
+            print(traceback.format_exc())
+
+    def refresh_forwardList(self):
+        try:
+            data = json.loads(urlopen('http://127.0.0.1:%d/api/forward' % self.port, timeout=1).read().decode())
+            self.PF_table_model.update(data)
+            self.ui.PFView.resizeRowsToContents()
+            self.ui.PFView.resizeColumnsToContents()
+        except Exception as e:
+            print(repr(e))
+            print(traceback.format_exc())
+
     def refresh_proxyList(self):
         try:
             data = json.loads(urlopen('http://127.0.0.1:%d/api/proxy' % self.port, timeout=1).read().decode())
             self.PL_table_model.update(data)
             self.ui.proxyListView.resizeRowsToContents()
             self.ui.proxyListView.resizeColumnsToContents()
+            # update PFProxyBox
+            self.ui.PFProxyBox.clear()
+            proxy_list = [item[0] for item in data]
+            self.ui.PFProxyBox.addItems(proxy_list)
         except Exception as e:
             print(repr(e))
             print(traceback.format_exc())
@@ -215,7 +267,7 @@ class MainWindow(QMainWindow):
 
     def activateProxy(self):
         index = self.ui.proxyListView.currentIndex().row()
-        _, _, piority = self.PL_table_model.mylist[index]
+        piority = self.PL_table_model.mylist[index][2]
         if 0 <= piority <= 100:
             return
         self.on_proxy_select()
@@ -476,6 +528,7 @@ class MainWindow(QMainWindow):
             self.refresh_LR()
             self.refresh_RR()
             self.refresh_proxyList()
+            self.refresh_forwardList()
             self.refresh_Settings()
             return
         if 'local' in data_list:
@@ -484,6 +537,8 @@ class MainWindow(QMainWindow):
             self.refresh_RR()
         if 'proxy' in data_list:
             self.refresh_proxyList()
+        if 'forward' in data_list:
+            self.refresh_forwardList()
         if 'settings' in data_list:
             self.refresh_Settings()
 
