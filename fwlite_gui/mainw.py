@@ -488,7 +488,7 @@ class MainWindow(QMainWindow):
         else:
             python = sys.executable
 
-        cmd = '"%s" -m fwlite_cli -c %s -gui' % (python, self.path_to_conf)
+        cmd = '"%s" -B -m fwlite_cli -c %s -gui' % (python, self.path_to_conf)
         self.runner.start(cmd)
         self.runner.readyReadStandardError.connect(self.newStderrInfo)
         self.runner.readyReadStandardOutput.connect(self.newStdoutInfo)
