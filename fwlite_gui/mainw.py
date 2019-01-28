@@ -394,7 +394,6 @@ class MainWindow(QMainWindow):
             print(repr(e))
 
     def addLocalRule(self):
-        print('addLocalRule')
         exp = int(self.ui.ExpireEdit.text()) if self.ui.ExpireEdit.text().isdigit() and int(self.ui.ExpireEdit.text()) > 0 else None
         rule = self.ui.LocalRuleEdit.text()
         data = json.dumps((rule, exp)).encode()
@@ -535,7 +534,10 @@ class MyTableModel(QtCore.QAbstractTableModel):
             return None
         elif role != QtCore.Qt.DisplayRole:
             return None
-        return self.mylist[index.row()][index.column()]
+        try:
+            return self.mylist[index.row()][index.column()]
+        except IndexError:
+            return None
 
     def update(self, mylist):
         self.layoutAboutToBeChanged.emit()
