@@ -181,6 +181,8 @@ class MainWindow(QMainWindow):
         for _name in name_list:
             if _name == name:
                 continue
+            if _name.startswith('FWLITE:'):
+                continue
             self.load_proxy_by_name(_name)
             self.ui.priorityEdit.setText(str(-1))
             self.addProxy()
@@ -231,7 +233,11 @@ class MainWindow(QMainWindow):
                 qs['PSK'] = urlquote(psk)
                 qs['method'] = encryption
         if plugin:
-            qs['plugin'] = urlquote(plugin + ';' + plugin_opt)
+            if plugin_opt:
+                plugin_info = urlquote(plugin + ';' + plugin_opt)
+            else:
+                plugin_info = urlquote(plugin)
+            qs['plugin'] = plugin_info
 
         if qs:
             query_string = '&'.join(['%s=%s' % (k, v) for k, v in qs.items()])
@@ -353,10 +359,15 @@ class MainWindow(QMainWindow):
         # plugin
         plugin = query.get('plugin', [None, ])[0]
         plugin_info = plugin.split(';') if plugin else None
+        try:
+            self.ui.pluginBox.setCurrentIndex(SUPPORTED_PLUGIN.index(plugin_info[0]))
+        except Exception:
+            self.ui.pluginBox.setCurrentIndex(0)
 
-        self.ui.pluginBox.setCurrentIndex(SUPPORTED_PLUGIN.index(plugin) if plugin else 0)
         if plugin_info:
             self.ui.plugin_optEdit.setText(';'.join(plugin_info[1:]))
+        else:
+            self.ui.plugin_optEdit.clear()
 
     def gfwlistToggle(self):
         try:
