@@ -175,7 +175,7 @@ class MainWindow(QMainWindow):
 
     def exclusiveProxyAdd(self):
         name = self.ui.nameEdit.text()
-        self.addProxy()
+        self.addProxy(enable=True)
         # disable all other proxy
         name_list = [item[0] for item in self.PL_table_model.mylist]
         for _name in name_list:
@@ -187,7 +187,7 @@ class MainWindow(QMainWindow):
             self.ui.priorityEdit.setText(str(-1))
             self.addProxy()
 
-    def addProxy(self):
+    def addProxy(self, enable=False):
         protocol = self.ui.protocolBox.currentText()
         name = self.ui.nameEdit.text()
         hostname = self.ui.hostnameEdit.text()
@@ -212,6 +212,9 @@ class MainWindow(QMainWindow):
         if not name:
             name = '%s-%s' % (hostname, port)
         if not priority:
+            priority = 99
+
+        if enable and priority < 0:
             priority = 99
 
         # if not all([hostname, port.isdigit(), encryption, psk]):
