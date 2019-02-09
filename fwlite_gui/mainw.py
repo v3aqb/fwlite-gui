@@ -29,7 +29,7 @@ proxy_handler = urllib.request.ProxyHandler({})
 opener = urllib.request.build_opener(proxy_handler)
 urlopen = opener.open
 
-SUPPORTED_PLUGIN = ['', 'goquiet', 'kcptun', 'simple-obfs']
+SUPPORTED_PLUGIN = ['', ]
 SUPPORTED_PROTOCOL = ['shadowsocks', 'hxsocks2', 'http', 'socks5']
 
 
@@ -41,15 +41,9 @@ class MainWindow(QMainWindow):
         icon = QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icon.png'))
         self.setWindowIcon(icon)
 
+        self.port = 0
         self.path_to_conf = path_to_conf
-        self.path_to_local = os.path.join(os.path.dirname(os.path.abspath(self.path_to_conf)),
-                                          'local.txt')
-
-        self.conf = configparser.ConfigParser(interpolation=None)
-        self.conf.optionxform = str
-        self.conf.read(self.path_to_conf)
-        listen = self.conf['FWLite'].get('listen', '8118')
-        self.port = int(listen) if listen.isdigit() else int(listen.split(':')[1])
+        self.load_conf(path_to_conf)
 
         self.tray = SystemTrayIcon(icon, self)
         self.tray.show()
@@ -90,7 +84,6 @@ class MainWindow(QMainWindow):
         method_list.extend(sorted(hxcrypto.method_supported.keys()))
         self.ui.encryptionBox.addItems(method_list)
 
-        self.ui.pluginBox.addItems(SUPPORTED_PLUGIN)
         self.ui.protocolBox.addItems(SUPPORTED_PROTOCOL)
 
         # port forward
@@ -111,6 +104,31 @@ class MainWindow(QMainWindow):
         self.ui.editLocalButton.clicked.connect(self.openlocal)
 
         self.createProcess()
+
+    def load_conf(self, path_to_conf):
+        self.path_to_conf = path_to_conf
+        self.path_to_local = os.path.join(os.path.dirname(os.path.abspath(self.path_to_conf)),
+                                          'local.txt')
+
+        self.conf = configparser.ConfigParser(interpolation=None)
+        self.conf.optionxform = str
+        self.conf.read(self.path_to_conf)
+        listen = self.conf['FWLite'].get('listen', '8118')
+        port = int(listen) if listen.isdigit() else int(listen.split(':')[1])
+        if port != self.port:
+            self.port = port
+            if sys.platform.startswith('win'):
+                setIEproxy(1, u'127.0.0.1:%d' % self.port)
+
+        # load plugin from config file
+        for plugin_name in SUPPORTED_PLUGIN:
+            if plugin_name:
+                SUPPORTED_PLUGIN.remove(plugin_name)
+        for plugin_name, _ in self.conf.items('plugin'):
+            if plugin_name not in SUPPORTED_PLUGIN:
+                SUPPORTED_PLUGIN.append(plugin_name)
+        self.ui.pluginBox.clear()
+        self.ui.pluginBox.addItems(SUPPORTED_PLUGIN)
 
     def addForward(self):
         try:
@@ -485,15 +503,7 @@ class MainWindow(QMainWindow):
     def createProcess(self):
         self.killProcess()
 
-        self.conf = configparser.ConfigParser(interpolation=None)
-        self.conf.optionxform = str
-        self.conf.read(self.path_to_conf)
-        listen = self.conf['FWLite'].get('listen', '8118')
-        port = int(listen) if listen.isdigit() else int(listen.split(':')[1])
-        if port != self.port:
-            self.port = port
-            if sys.platform.startswith('win'):
-                setIEproxy(1, u'127.0.0.1:%d' % self.port)
+        self.load_conf(self.path_to_conf)
 
         if sys.platform.startswith('win'):
             # find python
