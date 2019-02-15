@@ -231,6 +231,7 @@ class MainWindow(QMainWindow):
             name = '%s-%s' % (hostname, port)
         if not priority:
             priority = 99
+        priority = float(priority)
 
         if enable and priority < 0:
             priority = 99
