@@ -23,7 +23,7 @@ setup(
     dependency_links=['https://github.com/v3aqb/hxcrypto/archive/master.zip#egg=hxcrypto-0.0.3',
                       'https://github.com/v3aqb/fwlite-cli/archive/master.zip#egg=fwlite-cli-0.2',
                       ],
-    install_requires=["hxcrypto", "fwlite-cli >= 0.2", "pyqt5", "chardet"],
+    install_requires=["hxcrypto", "fwlite-cli >= 0.2", "pyqt5", "chardet", "dnslib"],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 2.7',

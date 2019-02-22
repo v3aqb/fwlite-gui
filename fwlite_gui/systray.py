@@ -1,8 +1,6 @@
 # coding: utf-8
 import os
 import sys
-import json
-import threading
 import traceback
 from urllib.request import urlopen
 
@@ -36,6 +34,17 @@ def setIEproxy(enable, proxy=u'', override=u'<local>'):
     winreg.SetValueEx(INTERNET_SETTINGS, 'ProxyOverride', 0, winreg.REG_SZ, override)
 
     ctypes.windll.Wininet.InternetSetOptionW(0, 39, 0, 0)
+
+
+def parse_hostport(host, default_port=80):
+    if isinstance(host, bytes):
+        host = host.decode()
+    import re
+    m = re.match(r'(.+):(\d+)$', host)
+    if m:
+        return m.group(1).strip('[]'), int(m.group(2))
+    else:
+        return host.strip('[]'), default_port
 
 
 class SystemTrayIcon(QSystemTrayIcon):
@@ -147,11 +156,11 @@ class SystemTrayIcon(QSystemTrayIcon):
 
 
 class RemoteResolve(QWidget):
-    trigger = QtCore.pyqtSignal(str)
 
     def __init__(self, window, parent=None):
         super(RemoteResolve, self).__init__()
         self.window = window
+        self.setWindowIcon(self.window.windowIcon())
 
         self.setObjectName("remote_resolver")
         self.resize(300, 200)
@@ -174,6 +183,12 @@ class RemoteResolve(QWidget):
         self.serverlineEdit = QtWidgets.QLineEdit(self)
         self.serverlineEdit.setObjectName("serverlineEdit")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.serverlineEdit)
+        self.proxyLabel = QtWidgets.QLabel(self)
+        self.proxyLabel.setObjectName("serverLabel")
+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.proxyLabel)
+        self.proxyBox = QtWidgets.QComboBox(self)
+        self.proxyBox.setObjectName("proxyBox")
+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.proxyBox)
         self.verticalLayout.addLayout(self.formLayout)
         self.goButton = QtWidgets.QPushButton(self)
         self.goButton.setObjectName("goButton")
@@ -190,24 +205,88 @@ class RemoteResolve(QWidget):
         self.hostLineEdit.setText(_tr("remote_resolver", "www.google.com"))
         self.serverLabel.setText(_tr("remote_resolver", "DNS Server:"))
         self.serverlineEdit.setText(_tr("remote_resolver", "8.8.8.8"))
+        self.proxyLabel.setText(_tr("remote_resolver", "Proxy:"))
         self.goButton.setText(_tr("remote_resolver", "Resolve"))
 
         self.goButton.clicked.connect(self.do_resolve)
-        self.trigger.connect(self.resultTextEdit.setPlainText)
+
+    def set_proxy(self, proxy_list):
+        proxy_list = [item for item in proxy_list if item.startswith('FWLITE:')]
+        proxy_list.insert(0, '_D1R3CT_')
+        proxy = self.proxyBox.currentText()
+        self.proxyBox.clear()
+        self.proxyBox.addItems(proxy_list)
+        self.proxyBox.setCurrentText(proxy)
 
     def do_resolve(self):
         self.resultTextEdit.setPlainText(_tr("MainWindow", "resolving_notice"))
-        threading.Thread(target=self._do_resolve, args=(self.hostLineEdit.text(), self.serverlineEdit.text())).start()
+        hostname = self.hostLineEdit.text()
+        dns_server = self.serverlineEdit.text()
+        proxy = self.proxyBox.currentText()
 
-    def _do_resolve(self, host, server):
+        self.resultTextEdit.setPlainText('resolving %s with %s via %s' % (hostname, dns_server, proxy))
+        import base64
+        import dnslib
+        import socket
+        import struct
+        import urllib.parse
+        result = []
         try:
-            data = json.dumps((host, server)).encode()
-            result = json.loads(urlopen('http://127.0.0.1:%d/api/remotedns' % self.window.port, data, timeout=10).read().decode())
+            if proxy:
+                self.resultTextEdit.setPlainText('get proxy')
+                _name = base64.urlsafe_b64encode(proxy.encode()).decode()
+                proxy = urlopen('http://127.0.0.1:%d/api/proxy/%s' % (self.window.port, _name), timeout=1).read().decode()
+                self.resultTextEdit.setPlainText(proxy)
+            # connect
+            if proxy:
+                # connect to proxy
+                parse = urllib.parse.urlparse(proxy)
+                address = (parse.hostname, parse.port)
+                soc = socket.create_connection(address, 3)
+                # connect to server
+                server = parse_hostport(dns_server, 53)
+                s = ['CONNECT %s:%s HTTP/1.1\r\n' % server, ]
+                s.append('Host: %s:%s\r\n\r\n' % server)
+                soc.sendall(''.join(s).encode())
+                rfile = soc.makefile('rb')
+                while True:
+                    data = rfile.readline()
+                    if not data.strip():
+                        break
+            else:
+                # connect to server
+                server = parse_hostport(dns_server, 53)
+                soc = socket.create_connection(server, 3)
+                rfile = soc.makefile('rb')
+
+            while True:
+                # send request
+                query = dnslib.DNSRecord.question(hostname, qtype='ANY')
+                query_data = query.pack()
+                data = struct.pack('>h', len(query_data)) + query_data
+                soc.sendall(bytes(data))
+
+                # read response
+                soc.settimeout(5)
+
+                reply_data_length = rfile.read(2)
+                reply_data = rfile.read(struct.unpack('>h', reply_data_length)[0])
+
+                # parse record
+                record = dnslib.DNSRecord.parse(reply_data)
+                result.extend(['%s %s' % (dnslib.QTYPE[r.rtype], r.rdata) for r in record.rr])
+
+                if record.rr and record.rr[0].rtype == dnslib.QTYPE.CNAME:
+                    hostname = str(record.rr[0].rdata)
+                else:
+                    break
+            rfile.close()
+            soc.close()
         except Exception as e:
             print(repr(e))
             print(traceback.format_exc())
             result = [repr(e), traceback.format_exc()]
-        self.trigger.emit('\n'.join(result))
+        self.resultTextEdit.setPlainText('\n'.join(result))
 
     def closeEvent(self, event):
         # hide mainwindow when close

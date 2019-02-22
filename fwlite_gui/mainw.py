@@ -179,6 +179,7 @@ class MainWindow(QMainWindow):
             self.ui.PFProxyBox.clear()
             proxy_list = [item[0] for item in data]
             self.ui.PFProxyBox.addItems(proxy_list)
+            self.tray.resolve.set_proxy(proxy_list)
         except Exception as e:
             print(repr(e))
             print(traceback.format_exc())
