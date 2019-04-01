@@ -2,7 +2,8 @@
 import os
 import sys
 import traceback
-from urllib.request import urlopen
+import urllib.request
+from urllib.request import Request
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QWidget, QMenu
@@ -15,6 +16,10 @@ try:
     pynotify.init('FWLite Notify')
 except ImportError:
     pynotify = None
+
+proxy_handler = urllib.request.ProxyHandler({})
+opener = urllib.request.build_opener(proxy_handler)
+urlopen = opener.open
 
 
 def setIEproxy(enable, proxy=u'', override=u'<local>'):
@@ -235,7 +240,8 @@ class RemoteResolve(QWidget):
             if proxy:
                 self.resultTextEdit.setPlainText('get proxy')
                 _name = base64.urlsafe_b64encode(proxy.encode()).decode()
-                proxy = urlopen('http://127.0.0.1:%d/api/proxy/%s' % (self.window.port, _name), timeout=1).read().decode()
+                req = Request('http://127.0.0.1:%d/api/proxy/%s' % (self.window.port, _name), headers=self.window.api_auth)
+                proxy = urlopen(req, timeout=1).read().decode()
                 self.resultTextEdit.setPlainText(proxy)
             # connect
             if proxy:

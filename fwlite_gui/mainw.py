@@ -11,6 +11,7 @@ import configparser
 from collections import deque
 
 import urllib.request
+from urllib.request import Request
 import urllib.parse
 
 import chardet
@@ -120,6 +121,11 @@ class MainWindow(QMainWindow):
             if sys.platform.startswith('win'):
                 setIEproxy(1, u'127.0.0.1:%d' % self.port)
 
+        _pass = self.conf['FWLite'].get('remotepass', None)
+        if _pass:
+            _pass = 'admin:' + _pass
+        self.api_auth = {'Authorization': 'Basic %s' % base64.b64encode(_pass.encode()).decode()} if _pass else {}
+
         # load plugin from config file
         for plugin_name in SUPPORTED_PLUGIN:
             if plugin_name:
@@ -139,7 +145,8 @@ class MainWindow(QMainWindow):
             port = int(port)
             proxy = self.ui.PFProxyBox.currentText()
             data = json.dumps((target, proxy, port)).encode()
-            urlopen('http://127.0.0.1:%d/api/forward' % self.port, data, timeout=1).read()
+            req = Request('http://127.0.0.1:%d/api/forward' % self.port, data, headers=self.api_auth)
+            urlopen(req, timeout=1).read()
             self.ui.PFTargetEdit.clear()
             self.ui.PFPortEdit.clear()
         except Exception as e:
@@ -148,20 +155,18 @@ class MainWindow(QMainWindow):
 
     def delForward(self):
         index = self.ui.PFView.currentIndex().row()
-        from http.client import HTTPConnection
         try:
             port = self.PF_table_model.mylist[index][2]
-            conn = HTTPConnection('127.0.0.1', self.port, timeout=1)
-            conn.request('DELETE', '/api/forward/%s' % port)
-            resp = conn.getresponse()
-            resp.read()
+            req = Request('http://127.0.0.1:%d/api/forward/%s' % (self.port, port), headers=self.api_auth, method='DELETE')
+            urlopen(req, timeout=1).read()
         except Exception as e:
             print(repr(e))
             print(traceback.format_exc())
 
     def refresh_forwardList(self):
         try:
-            data = json.loads(urlopen('http://127.0.0.1:%d/api/forward' % self.port, timeout=1).read().decode())
+            req = Request('http://127.0.0.1:%d/api/forward' % self.port, headers=self.api_auth)
+            data = json.loads(urlopen(req, timeout=1).read().decode())
             self.PF_table_model.update(data)
             self.ui.PFView.resizeRowsToContents()
             self.ui.PFView.resizeColumnsToContents()
@@ -171,7 +176,8 @@ class MainWindow(QMainWindow):
 
     def refresh_proxyList(self):
         try:
-            data = json.loads(urlopen('http://127.0.0.1:%d/api/proxy' % self.port, timeout=1).read().decode())
+            req = Request('http://127.0.0.1:%d/api/proxy' % self.port, headers=self.api_auth)
+            data = json.loads(urlopen(req, timeout=1).read().decode())
             self.PL_table_model.update(data)
             self.ui.proxyListView.resizeRowsToContents()
             self.ui.proxyListView.resizeColumnsToContents()
@@ -186,8 +192,10 @@ class MainWindow(QMainWindow):
 
     def refresh_Settings(self):
         try:
-            self.ui.gfwlistToggle.setCheckState(QtCore.Qt.Checked if json.loads(urlopen('http://127.0.0.1:%d/api/gfwlist' % self.port, timeout=1).read().decode()) else QtCore.Qt.Unchecked)
-            self.ui.adblockToggle.setCheckState(QtCore.Qt.Checked if json.loads(urlopen('http://127.0.0.1:%d/api/adblock' % self.port, timeout=1).read().decode()) else QtCore.Qt.Unchecked)
+            req = Request('http://127.0.0.1:%d/api/gfwlist' % self.port, headers=self.api_auth)
+            self.ui.gfwlistToggle.setCheckState(QtCore.Qt.Checked if json.loads(urlopen(req, timeout=1).read().decode()) else QtCore.Qt.Unchecked)
+            req = Request('http://127.0.0.1:%d/api/adblock' % self.port, headers=self.api_auth)
+            self.ui.adblockToggle.setCheckState(QtCore.Qt.Checked if json.loads(urlopen(req, timeout=1).read().decode()) else QtCore.Qt.Unchecked)
         except Exception as e:
             print(repr(e))
             print(traceback.format_exc())
@@ -273,7 +281,8 @@ class MainWindow(QMainWindow):
         url += ' %s' % priority
         data = json.dumps((name, url)).encode()
         try:
-            urlopen('http://127.0.0.1:%d/api/proxy' % self.port, data, timeout=1).read()
+            req = Request('http://127.0.0.1:%d/api/proxy' % self.port, data, headers=self.api_auth)
+            urlopen(req, timeout=1).read()
         except Exception:
             self.tray.showMessage_('add proxy %s failed!' % name)
         else:
@@ -310,14 +319,11 @@ class MainWindow(QMainWindow):
 
     def delProxy(self):
         index = self.ui.proxyListView.currentIndex().row()
-        from http.client import HTTPConnection
         try:
             name = self.PL_table_model.mylist[index][0]
             name = base64.urlsafe_b64encode(name.encode()).decode()
-            conn = HTTPConnection('127.0.0.1', self.port, timeout=1)
-            conn.request('DELETE', '/api/proxy/%s' % name)
-            resp = conn.getresponse()
-            resp.read()
+            req = Request('http://127.0.0.1:%d/api/proxy/%s' % (self.port, name), headers=self.api_auth, method='DELETE')
+            urlopen(req, timeout=1).read()
         except Exception as e:
             print(repr(e))
 
@@ -331,7 +337,8 @@ class MainWindow(QMainWindow):
     def load_proxy_by_name(self, name):
         _name = base64.urlsafe_b64encode(name.encode()).decode()
         try:
-            proxy = urlopen('http://127.0.0.1:%d/api/proxy/%s' % (self.port, _name), timeout=1).read().decode()
+            req = Request('http://127.0.0.1:%d/api/proxy/%s' % (self.port, _name), headers=self.api_auth)
+            proxy = urlopen(req, timeout=1).read().decode()
         except Exception:
             return
         if '|' in proxy:
@@ -394,13 +401,15 @@ class MainWindow(QMainWindow):
 
     def gfwlistToggle(self):
         try:
-            urlopen('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.gfwlistToggle.isChecked()).encode(), timeout=1).read()
+            req = Request('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.gfwlistToggle.isChecked()).encode(), headers=self.api_auth)
+            urlopen(req, timeout=1).read()
         except Exception as e:
             print(repr(e))
 
     def adblockToggle(self):
         try:
-            urlopen('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.adblockToggle.isChecked()).encode(), timeout=1).read()
+            req = Request('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.adblockToggle.isChecked()).encode(), headers=self.api_auth)
+            urlopen(req, timeout=1).read()
         except Exception as e:
             print(repr(e))
 
@@ -424,7 +433,8 @@ class MainWindow(QMainWindow):
 
     def refresh_RR(self):
         try:
-            data = json.loads(urlopen('http://127.0.0.1:%d/api/redirector' % self.port, timeout=1).read().decode())
+            req = Request('http://127.0.0.1:%d/api/redirector' % self.port, headers=self.api_auth)
+            data = json.loads(urlopen(req, timeout=1).read().decode())
             lst = []
             self.ui.RedirectorRulesLayout.removeItem(self.spacer_RR)
             for redir_rule in data:
@@ -449,7 +459,8 @@ class MainWindow(QMainWindow):
         dest = self.ui.DestEdit.text()
         data = json.dumps((rule, dest)).encode()
         try:
-            urlopen('http://127.0.0.1:%d/api/redirector' % self.port, data, timeout=1)
+            req = Request('http://127.0.0.1:%d/api/redirector' % self.port, data, headers=self.api_auth)
+            urlopen(req, timeout=1)
         except Exception:
             self.tray.showMessage_('add redirrule %s %s failed!' % (rule, dest))
         else:
@@ -460,7 +471,8 @@ class MainWindow(QMainWindow):
         # uri = 'http://127.0.0.1:%d/api/localrule' % self.port
         # http_request('GET', uri, cb=self._refresh_LR)
         try:
-            data = json.loads(urlopen('http://127.0.0.1:%d/api/localrule' % self.port, timeout=1).read().decode())
+            req = Request('http://127.0.0.1:%d/api/localrule' % self.port, headers=self.api_auth)
+            data = json.loads(urlopen(req, timeout=1).read().decode())
             lst = []
             self.ui.LocalRulesLayout.removeItem(self.spacer_LR)
             for rule, exp in data:
@@ -484,7 +496,8 @@ class MainWindow(QMainWindow):
         rule = self.ui.LocalRuleEdit.text()
         data = json.dumps((rule, exp)).encode()
         try:
-            urlopen('http://127.0.0.1:%d/api/localrule' % self.port, data, timeout=1).read()
+            req = Request('http://127.0.0.1:%d/api/localrule' % self.port, data, headers=self.api_auth)
+            urlopen(req, timeout=1).read()
         except Exception as e:
             print(repr(e))
         else:
@@ -496,7 +509,8 @@ class MainWindow(QMainWindow):
         self.runner.readyReadStandardOutput.connect(lambda: None)
         if self.runner.state() == QProcess.Running:
             try:
-                urlopen('http://127.0.0.1:%d/api/exit' % self.port, timeout=2).read()
+                req = Request('http://127.0.0.1:%d/api/exit' % self.port, headers=self.api_auth)
+                urlopen(req, timeout=2).read()
             except Exception as e:
                 print(repr(e))
             self.runner.kill()
@@ -673,10 +687,12 @@ class LocalRule(QWidget):
         cb.setText(self.rule, mode=cb.Clipboard)
 
     def delrule(self):
-        from http.client import HTTPConnection
-        conn = HTTPConnection('127.0.0.1', self.window.port, timeout=1)
-        conn.request('DELETE', '/api/localrule/%s' % base64.urlsafe_b64encode(self.rule.encode()).decode())
-        conn.getresponse().read()
+        try:
+            rule = base64.urlsafe_b64encode(self.rule.encode()).decode()
+            req = Request('http://127.0.0.1:%d//api/localrule/%s' % (self.window.port, rule), headers=self.window.api_auth, method='DELETE')
+            urlopen(req, timeout=1).read()
+        except Exception:
+            pass
 
     def updaterule(self, rule, exp):
         self.rule = rule
@@ -709,10 +725,12 @@ class RedirRule(QWidget):
         self.updaterule(rule, dest)
 
     def delrule(self):
-        from http.client import HTTPConnection
-        conn = HTTPConnection('127.0.0.1', self.window.port, timeout=1)
-        conn.request('DELETE', '/api/redirector/?rule=%s' % (base64.urlsafe_b64encode(self.rule.encode()).decode()))
-        conn.getresponse().read()
+        try:
+            rule = base64.urlsafe_b64encode(self.rule.encode()).decode()
+            req = Request('http://127.0.0.1:%d/api/redirector/?rule=%s' % (self.window.port, rule), headers=self.window.api_auth, method='DELETE')
+            urlopen(req, timeout=1).read()
+        except Exception:
+            pass
 
     def updaterule(self, rule, dest):
         self.rule = '%s %s' % (rule, dest)
