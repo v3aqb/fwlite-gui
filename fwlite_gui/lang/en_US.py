@@ -1,6 +1,5 @@
 
-data = {
-        'show_toggle': "Show/Hide",
+data = {'show_toggle': "Show/Hide",
         'reload': "Reload",
         'clear_dns_cache': "Clear DNS Cache",
         'remote_dns_resolve': "Remote DNS resolve",
@@ -19,4 +18,5 @@ data = {
         'bypass_china': 'bypass china',
         'bypass_LAN': 'bypass LAN',
         'bypass_localhost': 'bypass localhost',
+        'proxy_delete_info': 'Delete %s from config file?',
         }

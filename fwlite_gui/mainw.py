@@ -18,7 +18,7 @@ import chardet
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QSpacerItem, QSizePolicy, QMessageBox
 from PyQt5.QtCore import QProcess
 
 from .ui_mainwindow import Ui_MainWindow
@@ -319,13 +319,32 @@ class MainWindow(QMainWindow):
 
     def delProxy(self):
         index = self.ui.proxyListView.currentIndex().row()
-        try:
-            name = self.PL_table_model.mylist[index][0]
-            name = base64.urlsafe_b64encode(name.encode()).decode()
-            req = Request('http://127.0.0.1:%d/api/proxy/%s' % (self.port, name), headers=self.api_auth, method='DELETE')
-            urlopen(req, timeout=1).read()
-        except Exception as e:
-            print(repr(e))
+        name = self.PL_table_model.mylist[index][0]
+        # prompt confirm
+        msgbox = QMessageBox()
+        msgbox.setWindowTitle('FWLite')
+        msgbox.setIcon(QMessageBox.Warning)
+        msgbox.setText(_tr("MainWindow", 'Warning'))
+        msgbox.setInformativeText(_tr("MainWindow", 'proxy_delete_info') % name)
+        msgbox.addButton(_tr("MainWindow", 'Delete'), QMessageBox.AcceptRole)
+        msgbox.addButton(_tr("MainWindow", 'Disable'), QMessageBox.DestructiveRole)
+        Cancel = msgbox.addButton(_tr("MainWindow", 'Cancel'), QMessageBox.RejectRole)
+        msgbox.setDefaultButton(Cancel)
+        msgbox.setEscapeButton(Cancel)
+        reply = msgbox.exec()
+        if reply == QMessageBox.AcceptRole:
+            # delete proxy
+            try:
+                name = base64.urlsafe_b64encode(name.encode()).decode()
+                req = Request('http://127.0.0.1:%d/api/proxy/%s' % (self.port, name), headers=self.api_auth, method='DELETE')
+                urlopen(req, timeout=1).read()
+            except Exception as e:
+                print(repr(e))
+        elif reply == 1:
+            # disable proxy
+            self.disableProxy()
+        else:
+            return
 
     def on_proxy_select(self):
         index = self.ui.proxyListView.currentIndex().row()

@@ -60,4 +60,8 @@ data = {'Local Rules': u"自定义规则",
         'Stop': u'停止',
         'Activate': u'启用',
         'resp': u'响应',
+        'proxy_delete_info': u'从配置文件中删除%s？',
+        'Cancel': u'取消',
+        'Delete': u"删除",
+        'Warning': u"警告",
         }
