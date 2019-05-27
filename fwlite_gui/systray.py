@@ -79,9 +79,6 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.menu.addAction(self.reloadAction)
 
         if sys.platform.startswith('win'):
-
-            if self.window.ieproxy == 1:
-                setIEproxy(1, u'127.0.0.1:%d' % self.window.port)
             self.settingIEproxyMenu = self.menu.addMenu(_tr("SystemTrayIcon", "set_proxy"))
             self.settingIEproxyMenu.clear()
 

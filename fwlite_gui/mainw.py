@@ -242,7 +242,7 @@ class MainWindow(QMainWindow):
             name = '%s-%s' % (hostname, port)
         if not priority:
             priority = 99
-        priority = float(priority)
+        priority = int(float(priority))
 
         if enable and priority < 0:
             priority = 99
@@ -330,15 +330,18 @@ class MainWindow(QMainWindow):
         msgbox.setInformativeText(_tr("MainWindow", 'proxy_delete_info') % name)
         msgbox.addButton(_tr("MainWindow", 'Delete'), QMessageBox.AcceptRole)
         msgbox.addButton(_tr("MainWindow", 'Disable'), QMessageBox.DestructiveRole)
-        Cancel = msgbox.addButton(_tr("MainWindow", 'Cancel'), QMessageBox.RejectRole)
-        msgbox.setDefaultButton(Cancel)
-        msgbox.setEscapeButton(Cancel)
+        cancel = msgbox.addButton(_tr("MainWindow", 'Cancel'), QMessageBox.RejectRole)
+        msgbox.setDefaultButton(cancel)
+        msgbox.setEscapeButton(cancel)
         reply = msgbox.exec()
         if reply == QMessageBox.AcceptRole:
             # delete proxy
             try:
                 name = base64.urlsafe_b64encode(name.encode()).decode()
-                req = Request('http://127.0.0.1:%d/api/proxy/%s' % (self.port, name), headers=self.api_auth, method='DELETE')
+                req = Request(
+                    'http://127.0.0.1:%d/api/proxy/%s' % (self.port, name),
+                    headers=self.api_auth,
+                    method='DELETE')
                 urlopen(req, timeout=1).read()
             except Exception as e:
                 print(repr(e))
@@ -358,7 +361,9 @@ class MainWindow(QMainWindow):
     def load_proxy_by_name(self, name):
         _name = base64.urlsafe_b64encode(name.encode()).decode()
         try:
-            req = Request('http://127.0.0.1:%d/api/proxy/%s' % (self.port, _name), headers=self.api_auth)
+            req = Request(
+                'http://127.0.0.1:%d/api/proxy/%s' % (self.port, _name),
+                headers=self.api_auth)
             proxy = urlopen(req, timeout=1).read().decode()
         except Exception:
             return
@@ -422,14 +427,20 @@ class MainWindow(QMainWindow):
 
     def gfwlistToggle(self):
         try:
-            req = Request('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.gfwlistToggle.isChecked()).encode(), headers=self.api_auth)
+            req = Request(
+                'http://127.0.0.1:%d/api/gfwlist' % self.port,
+                json.dumps(self.ui.gfwlistToggle.isChecked()).encode(),
+                headers=self.api_auth)
             urlopen(req, timeout=1).read()
         except Exception as e:
             print(repr(e))
 
     def adblockToggle(self):
         try:
-            req = Request('http://127.0.0.1:%d/api/gfwlist' % self.port, json.dumps(self.ui.adblockToggle.isChecked()).encode(), headers=self.api_auth)
+            req = Request(
+                'http://127.0.0.1:%d/api/gfwlist' % self.port,
+                json.dumps(self.ui.adblockToggle.isChecked()).encode(),
+                headers=self.api_auth)
             urlopen(req, timeout=1).read()
         except Exception as e:
             print(repr(e))
@@ -480,7 +491,10 @@ class MainWindow(QMainWindow):
         dest = self.ui.DestEdit.text()
         data = json.dumps((rule, dest)).encode()
         try:
-            req = Request('http://127.0.0.1:%d/api/redirector' % self.port, data, headers=self.api_auth)
+            req = Request(
+                'http://127.0.0.1:%d/api/redirector' % self.port,
+                data,
+                headers=self.api_auth)
             urlopen(req, timeout=1)
         except Exception:
             self.tray.showMessage_('add redirrule %s %s failed!' % (rule, dest))
@@ -756,14 +770,3 @@ class RedirRule(QWidget):
     def updaterule(self, rule, dest):
         self.rule = '%s %s' % (rule, dest)
         self.lineEdit.setText(self.rule)
-
-
-if __name__ == '__main__':
-    if os.name == 'nt':
-        import ctypes
-        myappid = 'v3aqb.fwlite'  # arbitrary string
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-
-    app = QApplication([])
-    ex = MainWindow(sys.argv)
-    sys.exit(app.exec_())

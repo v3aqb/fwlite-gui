@@ -64,4 +64,5 @@ data = {'Local Rules': u"自定义规则",
         'Cancel': u'取消',
         'Delete': u"删除",
         'Warning': u"警告",
+        'Local Port': u'监听端口',
         }
