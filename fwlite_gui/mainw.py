@@ -116,11 +116,11 @@ class MainWindow(QMainWindow):
         self.conf.read(self.path_to_conf)
         listen = self.conf['FWLite'].get('listen', '8118')
         port = int(listen) if listen.isdigit() else int(listen.split(':')[1])
-        self.ieproxy = int(self.conf['FWLite'].get('ieproxy', '1'))
-        
+        self.ieproxy = self.conf['FWLite'].getboolean('ieproxy', True)
+
         if port != self.port:
             self.port = port
-            if sys.platform.startswith('win') and self.ieproxy == 1:
+            if sys.platform.startswith('win') and self.ieproxy:
                 setIEproxy(1, u'127.0.0.1:%d' % self.port)
 
         _pass = self.conf['FWLite'].get('remotepass', None)
