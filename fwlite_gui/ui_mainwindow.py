@@ -2,11 +2,12 @@
 
 # Form implementation generated from reading ui file 'mainwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.12.1
 #
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 from .translate import translate
 _tr = translate
@@ -406,7 +407,7 @@ class Ui_MainWindow(object):
         self.PFRemoveButton.setText(_tr("MainWindow", "Remove"))
         self.groupBox_3.setTitle(_tr("MainWindow", "Add Port Forward"))
         self.label_18.setText(_tr("MainWindow", "Target"))
-        self.label_19.setText(_tr("MainWindow", "Port"))
+        self.label_19.setText(_tr("MainWindow", "Local Port"))
         self.label_20.setText(_tr("MainWindow", "Proxy"))
         self.PFAddButton.setText(_tr("MainWindow", "Add"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _tr("MainWindow", "Port Forward"))
@@ -415,4 +416,5 @@ class Ui_MainWindow(object):
         self.editConfButton.setText(_tr("MainWindow", "Edit userconf.ini"))
         self.editLocalButton.setText(_tr("MainWindow", "Edit local.txt"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_6), _tr("MainWindow", "Settings"))
+
 
