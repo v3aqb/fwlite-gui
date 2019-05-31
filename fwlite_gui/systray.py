@@ -141,7 +141,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.resolve.show()
 
     def on_Quit(self):
-        if sys.platform.startswith('win'):
+        if sys.platform.startswith('win') and self.window.ieproxy == 1:
             setIEproxy(0)
         self.window.killProcess()
         self.hide()
