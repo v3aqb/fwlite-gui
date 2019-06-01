@@ -51,6 +51,9 @@ class MainWindow(QMainWindow):
         self.consoleText = deque(maxlen=300)
         self.runner = QProcess(self)
 
+        # log
+        self.ui.console.setWordWrapMode(3)
+
         # local rules
         self.ui.AddLocalRuleButton.clicked.connect(self.addLocalRule)
         self.spacer_LR = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
