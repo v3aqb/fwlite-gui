@@ -19,4 +19,5 @@ data = {'show_toggle': "Show/Hide",
         'bypass_LAN': 'bypass LAN',
         'bypass_localhost': 'bypass localhost',
         'proxy_delete_info': 'Delete %s from config file?',
+        'auto_system_proxy': 'Set System Proxy Automatically',
         }

@@ -65,4 +65,5 @@ data = {'Local Rules': u"自定义规则",
         'Delete': u"删除",
         'Warning': u"警告",
         'Local Port': u'监听端口',
+        'auto_system_proxy': '自动设置系统代理',
         }

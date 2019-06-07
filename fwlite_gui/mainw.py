@@ -106,6 +106,10 @@ class MainWindow(QMainWindow):
         self.ui.adblockToggle.stateChanged.connect(self.adblockToggle)
         self.ui.editConfButton.clicked.connect(self.openconf)
         self.ui.editLocalButton.clicked.connect(self.openlocal)
+        self.ui.sys_proxy_toggle.setCheckState(QtCore.Qt.Checked if self.ieproxy else QtCore.Qt.Unchecked)
+        self.ui.sys_proxy_toggle.stateChanged.connect(self.sysProxyToggle)
+        if not sys.platform.startswith('win'):
+            self.ui.sys_proxy_toggle.setEnabled(False)
 
         self.createProcess()
 
@@ -447,6 +451,14 @@ class MainWindow(QMainWindow):
             urlopen(req, timeout=1).read()
         except Exception as e:
             print(repr(e))
+
+    def sysProxyToggle(self):
+        sysproxy = self.ui.sys_proxy_toggle.isChecked()
+        self.load_conf(self.path_to_conf)
+        self.ieproxy = sysproxy
+        self.conf.set('FWLite', 'ieproxy', '1' if sysproxy else '0')
+        with open(self.path_to_conf, 'w') as f:
+            self.conf.write(f)
 
     def openlocal(self):
         self.openfile(self.path_to_local)
