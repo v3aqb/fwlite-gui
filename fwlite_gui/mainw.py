@@ -19,7 +19,7 @@ import chardet
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QSpacerItem, QSizePolicy, QMessageBox
-from PyQt5.QtCore import QProcess
+from PyQt5.QtCore import QProcess, Qt
 
 from .ui_mainwindow import Ui_MainWindow
 from .systray import SystemTrayIcon, setIEproxy
@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
         self.PL_table_model = MyTableModel(self, data, header)
 
         self.ui.proxyListView.setModel(self.PL_table_model)
-        self.ui.proxyListView.clicked.connect(self.on_proxy_select)
+        self.ui.proxyListView.pressed.connect(self.on_proxy_select)
         import hxcrypto
         method_list = ['']
         method_list.extend(sorted(hxcrypto.method_supported.keys()))
@@ -360,23 +360,32 @@ class MainWindow(QMainWindow):
             return
 
     def on_proxy_select(self):
+        button = QApplication.mouseButtons()
         index = self.ui.proxyListView.currentIndex().row()
         name = self.PL_table_model.mylist[index][0]
         piority = self.PL_table_model.mylist[index][2]
         self.load_proxy_by_name(name)
         self.ui.priorityEdit.setText(str(piority))
+        if button == Qt.RightButton:
+            proxy = self.get_proxy_by_name(name)
+            QApplication.instance().clipboard().setText(proxy)
+            self.statusBar().showMessage('proxy copied to clipboard', 3000)
 
-    def load_proxy_by_name(self, name):
+    def get_proxy_by_name(self, name):
         _name = base64.urlsafe_b64encode(name.encode()).decode()
         try:
             req = Request(
                 'http://127.0.0.1:%d/api/proxy/%s' % (self.port, _name),
                 headers=self.api_auth)
             proxy = urlopen(req, timeout=1).read().decode()
-            self.ui.nameEdit.setText(name)
-            self.set_ui_by_proxy_uri(proxy)
+            return proxy
         except Exception:
             return
+
+    def load_proxy_by_name(self, name):
+        self.ui.nameEdit.setText(name)
+        proxy = self.get_proxy_by_name(name)
+        self.set_ui_by_proxy_uri(proxy)
 
     def proxy_hostname_changed(self):
         hostname = self.ui.hostnameEdit.text()
@@ -387,6 +396,8 @@ class MainWindow(QMainWindow):
                 pass
 
     def set_ui_by_proxy_uri(self, proxy):
+        if not proxy:
+            return
         if '|' in proxy:
             proxy_list = proxy.split('|')
             proxy = proxy_list[0]
