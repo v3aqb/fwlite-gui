@@ -73,6 +73,7 @@ class MainWindow(QMainWindow):
         self.ui.proxyDisableButton.clicked.connect(self.disableProxy)
         self.ui.proxyActivateButton.clicked.connect(self.activateProxy)
         self.ui.exclusiveProxyAddButton.clicked.connect(self.exclusiveProxyAdd)
+        self.ui.hostnameEdit.textChanged.connect(self.proxy_hostname_changed)
         header = [_tr("MainWindow", "name"),
                   _tr("MainWindow", "address"),
                   _tr("MainWindow", "priority"),
@@ -372,8 +373,20 @@ class MainWindow(QMainWindow):
                 'http://127.0.0.1:%d/api/proxy/%s' % (self.port, _name),
                 headers=self.api_auth)
             proxy = urlopen(req, timeout=1).read().decode()
+            self.ui.nameEdit.setText(name)
+            self.set_ui_by_proxy_uri(proxy)
         except Exception:
             return
+
+    def proxy_hostname_changed(self):
+        hostname = self.ui.hostnameEdit.text()
+        if '//' in hostname and len(hostname) > 20:
+            try:
+                self.set_ui_by_proxy_uri(hostname)
+            finally:
+                pass
+
+    def set_ui_by_proxy_uri(self, proxy):
         if '|' in proxy:
             proxy_list = proxy.split('|')
             proxy = proxy_list[0]
@@ -414,7 +427,6 @@ class MainWindow(QMainWindow):
             self.ui.usernameEdit.setText(parse.username)
             self.ui.passwordEdit.setText(parse.password)
 
-        self.ui.nameEdit.setText(name)
         self.ui.hostnameEdit.setText(parse.hostname)
         self.ui.portEdit.setText(str(parse.port))
         self.ui.viaEdit.setText(via)
