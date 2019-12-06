@@ -294,7 +294,7 @@ class MainWindow(QMainWindow):
             req = Request('http://127.0.0.1:%d/api/proxy' % self.port, data, headers=self.api_auth)
             urlopen(req, timeout=1).read()
         except Exception:
-            self.tray.showMessage_('add proxy %s failed!' % name)
+            self.statusBar().showMessage('add proxy %s failed!' % name, 3000)
         else:
             self.ui.nameEdit.clear()
             self.ui.hostnameEdit.clear()
@@ -497,7 +497,7 @@ class MainWindow(QMainWindow):
         elif sys.platform.startswith('darwin'):
             cmd = 'open'
         else:
-            return self.showMessage_('OS not recognised')
+            return self.statusBar().showMessage('OS not recognised', 3000)
         subprocess.Popen('%s %s' % (cmd, path), shell=True)
         self.tray.showMessage_(_tr("MainWindow", "reload_notice"))
 
@@ -535,7 +535,7 @@ class MainWindow(QMainWindow):
                 headers=self.api_auth)
             urlopen(req, timeout=1)
         except Exception:
-            self.tray.showMessage_('add redirrule %s %s failed!' % (rule, dest))
+            self.statusBar().showMessage('add redirrule %s %s failed!' % (rule, dest), 3000)
         else:
             self.ui.RuleEdit.clear()
             self.ui.DestEdit.clear()
