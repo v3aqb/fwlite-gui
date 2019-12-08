@@ -56,6 +56,7 @@ class MainWindow(QMainWindow):
 
         # local rules
         self.ui.AddLocalRuleButton.clicked.connect(self.addLocalRule)
+        self.ui.isgfwedTestButton.clicked.connect(self.isgfwedTest)
         self.spacer_LR = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.ui.LocalRulesLayout.addItem(self.spacer_LR)
         self.local_rule_list = []
@@ -576,6 +577,15 @@ class MainWindow(QMainWindow):
         else:
             self.ui.LocalRuleEdit.clear()
             self.ui.ExpireEdit.clear()
+
+    def isgfwedTest(self):
+        uri = self.ui.uriEdit.text()
+        try:
+            req = Request('http://127.0.0.1:%d/api/isgfwed' % self.port, uri.encode('utf8'), headers=self.api_auth)
+            result = urlopen(req, timeout=1).read()
+            self.statusBar().showMessage(result.decode('utf8'), 3000)
+        except Exception as e:
+            self.statusBar().showMessage(repr(e), 3000)
 
     def killProcess(self):
         self.runner.readyReadStandardError.connect(lambda: None)
