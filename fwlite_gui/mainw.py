@@ -87,7 +87,8 @@ class MainWindow(QMainWindow):
         self.ui.proxyListView.pressed.connect(self.on_proxy_select)
         import hxcrypto
         method_list = ['']
-        method_list.extend(sorted(hxcrypto.method_supported.keys()))
+        method_list.extend(sorted(sorted(hxcrypto.method_supported.keys()),
+                                  key=lambda x: hxcrypto.is_aead(x)))
         self.ui.encryptionBox.addItems(method_list)
 
         self.ui.protocolBox.addItems(SUPPORTED_PROTOCOL)
