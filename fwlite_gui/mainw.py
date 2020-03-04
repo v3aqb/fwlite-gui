@@ -398,8 +398,12 @@ class MainWindow(QMainWindow):
                 pass
 
     def set_ui_by_proxy_uri(self, proxy):
-        if not proxy:
-            return
+        # clear
+        self.ui.encryptionBox.setCurrentIndex(0)
+        self.ui.pskEdit.setText('')
+        self.ui.usernameEdit.setText('')
+        self.ui.passwordEdit.setText('')
+
         if '|' in proxy:
             proxy_list = proxy.split('|')
             proxy = proxy_list[0]
@@ -419,8 +423,6 @@ class MainWindow(QMainWindow):
             method_index = self.method_list.index(method)
             self.ui.encryptionBox.setCurrentIndex(method_index)
             self.ui.pskEdit.setText(password)
-            self.ui.usernameEdit.setText('')
-            self.ui.passwordEdit.setText('')
         elif parse.scheme == 'hxs2':
             self.ui.protocolBox.setCurrentIndex(SUPPORTED_PROTOCOL.index('hxsocks2'))
             method = query.get('method', ['aes-128-cfb'])[0].lower()
@@ -433,8 +435,6 @@ class MainWindow(QMainWindow):
         else:
             # socks5 and http
             self.ui.protocolBox.setCurrentIndex(SUPPORTED_PROTOCOL.index(parse.scheme) if parse.scheme else 2)
-            self.ui.encryptionBox.setCurrentIndex(0)
-            self.ui.pskEdit.setText('')
             self.ui.usernameEdit.setText(parse.username)
             self.ui.passwordEdit.setText(parse.password)
 
