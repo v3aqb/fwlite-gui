@@ -50,6 +50,7 @@ def create_shortcut(path, target):
 
     shortcut = shell.CreateShortcut(path).QueryInterface(IWshRuntimeLibrary.IWshShortcut)
     shortcut.TargetPath = target
+    shortcut.WorkingDirectory = os.path.dirname(target)
     shortcut.Save()
 
 
