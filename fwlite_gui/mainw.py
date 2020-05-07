@@ -490,9 +490,12 @@ class MainWindow(QMainWindow):
             self.conf.write(f)
 
     def startup_toggle(self):
-        startup = self.ui.startup_toggle.isChecked()
-        from .startup import set_startup
-        set_startup(startup)
+        try:
+            startup = self.ui.startup_toggle.isChecked()
+            from .startup import set_startup
+            set_startup(startup)
+        except Exception as err:
+            self.statusBar().showMessage(repr(err), 5000)
 
     def openlocal(self):
         self.openfile(self.path_to_local)
