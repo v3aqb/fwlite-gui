@@ -660,23 +660,39 @@ class MainWindow(QMainWindow):
             return
         data = data.decode()
         data_list = data.splitlines(keepends=False)
-        if 'all' in data_list or '' in data_list:
-            self.refresh_LR()
-            self.refresh_RR()
-            self.refresh_proxyList()
-            self.refresh_forwardList()
-            self.refresh_Settings()
-            return
-        if 'local' in data_list:
-            self.refresh_LR()
-        if 'redir' in data_list:
-            self.refresh_RR()
-        if 'proxy' in data_list:
-            self.refresh_proxyList()
-        if 'forward' in data_list:
-            self.refresh_forwardList()
-        if 'settings' in data_list:
-            self.refresh_Settings()
+        op_list = []
+        for line in data_list:
+            if line.startswith('Fwlite port: '):
+                port = int(line[13:])
+                if port != self.port:
+                    self.port = port
+                    if sys.platform.startswith('win') and self.ieproxy:
+                        setIEproxy(1, u'127.0.0.1:%d' % self.port)
+            elif line == 'all':
+                for operation in [self.refresh_LR,
+                                  self.refresh_RR,
+                                  self.refresh_proxyList,
+                                  self.refresh_forwardList,
+                                  self.refresh_Settings]:
+                    if operation not in op_list:
+                        op_list.append(operation)
+            elif line == 'local':
+                if self.refresh_LR not in op_list:
+                    op_list.append(self.refresh_LR)
+            elif line == 'redir':
+                if self.refresh_RR not in op_list:
+                    op_list.append(self.refresh_RR)
+            elif line == 'proxy':
+                if self.refresh_proxyList not in op_list:
+                    op_list.append(self.refresh_proxyList)
+            elif line == 'forward':
+                if self.refresh_forwardList not in op_list:
+                    op_list.append(self.refresh_forwardList)
+            elif line == 'settings':
+                if self.refresh_Settings not in op_list:
+                    op_list.append(self.refresh_Settings)
+        for operation in op_list:
+            operation()
 
     def showToggle(self):
         if self.isVisible():
